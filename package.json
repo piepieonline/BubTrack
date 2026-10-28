@@ -1,0 +1,25 @@
+{
+  "name": "bubtrack",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "tunnel": "cloudflared tunnel run --url http://localhost:5173 bubtrack-dev",
+    "tunnel:preview": "cloudflared tunnel run --url http://localhost:4173 bubtrack-dev"
+  },
+  "dependencies": {
+    "preact": "^11.0.2"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.6",
+    "@types/google.accounts": "^0.0.18",
+    "@types/google.picker": "^0.0.52",
+    "@types/node": "^24.19.2",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.5",
+    "vite-plugin-pwa": "^2.0.0"
+  }
+}
