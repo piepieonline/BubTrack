@@ -15,7 +15,6 @@
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.6",
-    "@types/google.accounts": "^0.0.18",
     "@types/google.picker": "^0.0.52",
     "@types/node": "^24.19.2",
     "typescript": "~7.0.2",

@@ -15,6 +15,10 @@ Installable Preact PWA that reads and writes a single Google Sheet directly from
      - `https://www.piepieonline.com`
      - `https://dev.piepieonline.com`
      - `http://localhost:5173`
+   - Authorized redirect URIs:
+     - `https://www.piepieonline.com/BubTrack/`
+     - `https://dev.piepieonline.com/BubTrack/`
+     - `http://localhost:5173/BubTrack/`
 5. Credentials → API key, restricted to:
    - Websites:
      - `https://www.piepieonline.com/BubTrack/*`

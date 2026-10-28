@@ -1,6 +1,6 @@
 import type { ComponentChildren } from 'preact'
 import { useEffect, useMemo, useState } from 'preact/hooks'
-import { getAccessToken, hasValidToken, signOut } from './auth'
+import { hasValidToken, onSignedOut, signOut, startSignIn, takeSignInError } from './auth'
 import { ActionsPage } from './pages/ActionsPage'
 import { LogPage } from './pages/LogPage'
 import { forgetSavedSheet, loadSavedSheet, pickSpreadsheet, type PickedSheet } from './picker'
@@ -36,10 +36,12 @@ function GoogleApp() {
   const [signedIn, setSignedIn] = useState(hasValidToken())
   const [sheet, setSheet] = useState<PickedSheet | undefined>(loadSavedSheet())
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<string | undefined>(takeSignInError)
   const store = useMemo(() => sheet && new SheetRowStore(sheet.id), [sheet?.id])
 
-  // Popups need a tap, so an expired token sends the user back to the sign-in button.
+  useEffect(() => onSignedOut(() => setSignedIn(false)), [])
+
+  // Back to the sign-in button rather than redirecting away mid-action.
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === 'visible' && !hasValidToken()) setSignedIn(false)
@@ -60,11 +62,6 @@ function GoogleApp() {
     }
   }
 
-  const signIn = () => run(async () => {
-    await getAccessToken()
-    setSignedIn(true)
-  })
-
   const chooseSheet = () => run(async () => {
     const picked = await pickSpreadsheet()
     if (picked) setSheet(picked)
@@ -81,7 +78,7 @@ function GoogleApp() {
     return (
       <Gate error={error}>
         {!signedIn
-          ? <button disabled={busy} onClick={signIn}>Sign in with Google</button>
+          ? <button disabled={busy} onClick={startSignIn}>Sign in with Google</button>
           : <button disabled={busy} onClick={chooseSheet}>Choose spreadsheet</button>}
       </Gate>
     )

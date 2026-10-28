@@ -3,8 +3,8 @@ import type { Cell } from './rowStore'
 
 const SHEETS_API = 'https://sheets.googleapis.com/v4/spreadsheets'
 
-async function request<T>(path: string, init: RequestInit = {}, isRetry = false): Promise<T> {
-  const accessToken = await getAccessToken()
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const accessToken = getAccessToken()
   let response: Response
   try {
     response = await fetch(`${SHEETS_API}/${path}`, {
@@ -15,9 +15,9 @@ async function request<T>(path: string, init: RequestInit = {}, isRetry = false)
     throw new Error(navigator.onLine ? 'Network error reaching Google Sheets' : 'You are offline')
   }
 
-  if (response.status === 401 && !isRetry) {
+  if (response.status === 401) {
     invalidateToken()
-    return request(path, init, true)
+    throw new Error('Signed out, please sign in again')
   }
   if (!response.ok) {
     throw new Error(`Sheets API ${response.status}: ${await response.text()}`)

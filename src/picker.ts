@@ -19,7 +19,7 @@ export function forgetSavedSheet() {
 }
 
 export async function pickSpreadsheet(): Promise<PickedSheet | undefined> {
-  const accessToken = await getAccessToken()
+  const accessToken = getAccessToken()
   await loadScript(GAPI_SRC)
   await new Promise<void>((resolve) => gapi.load('picker', resolve))
 
