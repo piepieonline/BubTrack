@@ -217,6 +217,11 @@ input {
   grid-template-columns: repeat(3, 1fr);
 }
 
+.dialog .custom-time {
+  margin-top: 8px;
+  font-size: 1.25rem;
+}
+
 .dialog legend {
   margin-bottom: 8px;
   color: var(--muted);

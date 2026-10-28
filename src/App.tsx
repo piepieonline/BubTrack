@@ -9,6 +9,7 @@ import { SessionRowStore } from './sessionRowStore'
 import { SheetRowStore } from './sheetRowStore'
 import { useEntries, type Perform } from './useEntries'
 
+const alwaysRefresh = () => true
 const isTestMode = new URLSearchParams(location.search).has('test')
 
 export function App() {
@@ -20,7 +21,7 @@ function TestModeApp() {
   return (
     <Main
       store={store}
-      canRefresh={() => true}
+      canRefresh={alwaysRefresh}
       header={(perform) => (
         <div class="test-banner">
           <strong>TEST MODE</strong>
@@ -130,7 +131,7 @@ type MainProps = {
 }
 
 function Main({ store, canRefresh, header }: MainProps) {
-  const { entries, busy, error, perform, dismissError } = useEntries(store)
+  const { entries, busy, error, perform, dismissError } = useEntries(store, canRefresh)
   const route = useHashRoute()
 
   useEffect(() => {

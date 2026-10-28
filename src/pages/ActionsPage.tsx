@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks'
-import { addBottle, addNappy, endFeed, minutesAgo, saveNotes, startFeed, swapSide } from '../actions'
+import { addBottle, addNappy, endFeed, saveNotes, startFeed, swapSide } from '../actions'
 import { ActionDialog } from '../components/ActionDialog'
 import { AmountPicker } from '../components/AmountPicker'
 import { Choice } from '../components/Choice'
@@ -52,8 +52,7 @@ export function ActionsPage({ store, entries, busy, perform }: Props) {
     setDialog(kind)
   }
 
-  async function confirm(minutes: number) {
-    const at = minutesAgo(minutes)
+  async function confirm(at: Date) {
     const succeeded = await perform(async (fresh) => {
       switch (dialog) {
         case 'start': return startFeed(store, fresh, side, at, notes)

@@ -1,8 +1,6 @@
 import { Column, findOpenFeed, formatTime, nextId, oppositeSide, textCell, toRow, type Entry, type NappyType, type Side } from './entries'
 import type { RowStore } from './rowStore'
 
-export const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000)
-
 function requireOpenFeed(fresh: Entry[]): Entry {
   const openFeed = findOpenFeed(fresh, Date.now())
   if (!openFeed) throw new Error('No feed in progress')
