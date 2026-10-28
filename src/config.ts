@@ -2,5 +2,3 @@
 export const GOOGLE_CLIENT_ID = 'REPLACE_ME.apps.googleusercontent.com'
 export const GOOGLE_API_KEY = 'REPLACE_ME'
 export const GOOGLE_PROJECT_NUMBER = 'REPLACE_ME'
-
-export const DATA_RANGE = 'A1:Z'

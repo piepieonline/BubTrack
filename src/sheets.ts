@@ -1,8 +1,7 @@
 import { getAccessToken, invalidateToken } from './auth'
+import type { Cell } from './rowStore'
 
 const SHEETS_API = 'https://sheets.googleapis.com/v4/spreadsheets'
-
-export type Row = string[]
 
 async function request<T>(path: string, init: RequestInit = {}, isRetry = false): Promise<T> {
   const accessToken = await getAccessToken()
@@ -26,23 +25,24 @@ async function request<T>(path: string, init: RequestInit = {}, isRetry = false)
   return response.json()
 }
 
-export async function readRange(spreadsheetId: string, range: string): Promise<Row[]> {
-  const result = await request<{ values?: Row[] }>(
-    `${spreadsheetId}/values/${encodeURIComponent(range)}`,
+// Raw values (dates/times as serial numbers) so parsing doesn't depend on the sheet's locale.
+export async function readRange(spreadsheetId: string, range: string): Promise<Cell[][]> {
+  const result = await request<{ values?: Cell[][] }>(
+    `${spreadsheetId}/values/${encodeURIComponent(range)}?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`,
   )
   return result.values ?? []
 }
 
-export function appendRows(spreadsheetId: string, range: string, rows: Row[]) {
+export function appendRows(spreadsheetId: string, range: string, rows: string[][]) {
   return request(
     `${spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
     { method: 'POST', body: JSON.stringify({ values: rows }) },
   )
 }
 
-export function updateRange(spreadsheetId: string, range: string, rows: Row[]) {
-  return request(
-    `${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
-    { method: 'PUT', body: JSON.stringify({ values: rows }) },
-  )
+export function batchUpdate(spreadsheetId: string, data: { range: string; values: string[][] }[]) {
+  return request(`${spreadsheetId}/values:batchUpdate`, {
+    method: 'POST',
+    body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data }),
+  })
 }
