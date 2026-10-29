@@ -362,6 +362,10 @@ input {
   justify-content: center;
   font-weight: 600;
   color: var(--muted);
+.log-list li.session-start {
+  border-bottom: 2px solid var(--accent);
+}
+
   text-decoration: none;
 }
 

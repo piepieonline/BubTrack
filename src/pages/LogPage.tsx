@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'preact/hooks'
 import { saveNotes } from '../actions'
 import { NotesEditor } from '../components/NotesEditor'
-import { findOpenFeed, findSwappedFeeds, formatDate, formatDuration, formatTime, type Entry } from '../entries'
+import { findOpenFeed, findSessionStarts, findSwappedFeeds, formatDate, formatDuration, formatTime, type Entry } from '../entries'
 import type { RowStore } from '../rowStore'
 import type { Perform } from '../useEntries'
 import { useNow } from '../useNow'
@@ -44,6 +44,7 @@ function groupByDay(entries: Entry[]) {
 export function LogPage({ store, entries, busy, perform }: Props) {
   const [editingId, setEditingId] = useState<number>()
   const swappedIds = useMemo(() => findSwappedFeeds(entries), [entries])
+  const sessionStartIds = useMemo(() => findSessionStarts(entries), [entries])
   const openFeed = findOpenFeed(entries, useNow(60_000))
 
   async function save(id: number, notes: string) {
@@ -61,7 +62,7 @@ export function LogPage({ store, entries, busy, perform }: Props) {
           <h3 class="log-day">{group.label}</h3>
           <ul class="log-list">
             {group.entries.map((entry) => (
-              <li key={entry.id}>
+              <li key={entry.id} class={sessionStartIds.has(entry.id) ? 'session-start' : undefined}>
                 <button class="log-row" onClick={() => setEditingId(entry.id)}>
                   <span class="log-time">{formatTime(entry.start)}</span>
                   <span>{describe(entry, swappedIds.has(entry.id), entry === openFeed)}</span>

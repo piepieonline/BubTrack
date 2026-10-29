@@ -37,6 +37,7 @@ export type Entry = NewEntry & {
 }
 
 const OPEN_FEED_MAX_MS = 2 * 60 * 60 * 1000
+const SESSION_GAP_MS = 60 * 60 * 1000
 const MINUTES_PER_DAY = 24 * 60
 const SHEETS_EPOCH = { year: 1899, month: 11, day: 30 }
 
@@ -153,6 +154,17 @@ export function findSwappedFeeds(entries: Entry[]): Set<number> {
         && feedStarts.has(feedKey(entry.end, oppositeSide(entry.side))))
       .map((entry) => entry.id),
   )
+}
+
+// Compares against the latest end so far, as a nappy logged mid-feed ends before the feed does.
+export function findSessionStarts(entries: Entry[]): Set<number> {
+  const sessionStarts = new Set<number>()
+  let latestEnd: number | undefined
+  for (const entry of entries.toReversed()) {
+    if (latestEnd !== undefined && entry.start.getTime() - latestEnd > SESSION_GAP_MS) sessionStarts.add(entry.id)
+    latestEnd = Math.max(latestEnd ?? 0, (entry.end ?? entry.start).getTime())
+  }
+  return sessionStarts
 }
 
 export const oppositeSide =(side: Side): Side => (side === 'L' ? 'R' : 'L')
