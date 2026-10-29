@@ -4,7 +4,7 @@ import { ActionDialog } from '../components/ActionDialog'
 import { AmountPicker } from '../components/AmountPicker'
 import { Choice } from '../components/Choice'
 import { NotesEditor } from '../components/NotesEditor'
-import { findOpenFeed, formatTime, latestFeed, oppositeSide, type Entry, type NappyType, type Side } from '../entries'
+import { findOpenFeed, formatDuration, formatTime, latestFeed, oppositeSide, type Entry, type NappyType, type Side } from '../entries'
 import type { RowStore } from '../rowStore'
 import type { Perform } from '../useEntries'
 import { useNow } from '../useNow'
@@ -34,6 +34,7 @@ function formatElapsed(ms: number) {
 export function ActionsPage({ store, entries, busy, perform }: Props) {
   const now = useNow(1000)
   const openFeed = findOpenFeed(entries, now)
+  const lastFeed = latestFeed(entries)
   const [dialog, setDialog] = useState<DialogKind>()
 
   const [side, setSide] = useState<Side>('L')
@@ -86,7 +87,9 @@ export function ActionsPage({ store, entries, busy, perform }: Props) {
           />
         </div>
       ) : (
-        <p class="open-feed muted">No feed in progress</p>
+        <p class="open-feed muted">
+          No feed in progress{lastFeed && ` - ${formatDuration(now - (lastFeed.end ?? lastFeed.start).getTime())} since last feed`}
+        </p>
       )}
 
       <div class="action-grid">
