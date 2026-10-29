@@ -3,14 +3,14 @@ import { saveNotes } from '../actions'
 import { NotesEditor } from '../components/NotesEditor'
 import { findOpenFeed, findSessionStarts, findSwappedFeeds, formatDate, formatDuration, formatTime, type Entry } from '../entries'
 import type { RowStore } from '../rowStore'
-import type { Perform } from '../useEntries'
+import type { Perform } from '../useRows'
 import { useNow } from '../useNow'
 
 type Props = {
   store: RowStore
   entries: Entry[]
   busy: boolean
-  perform: Perform
+  perform: Perform<Entry>
 }
 
 const dateLabel = (date: Date) =>

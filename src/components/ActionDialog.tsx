@@ -11,6 +11,7 @@ type Props = {
   busy: boolean
   onConfirm: (at: Date) => void
   onCancel: () => void
+  onDelete?: () => void
   children?: ComponentChildren
 }
 
@@ -25,7 +26,7 @@ function mostRecentTimeOfDay(time: string): Date {
   return at
 }
 
-export function ActionDialog({ title, canConfirm = true, busy, onConfirm, onCancel, children }: Props) {
+export function ActionDialog({ title, canConfirm = true, busy, onConfirm, onCancel, onDelete, children }: Props) {
   const [selection, setSelection] = useState<number | typeof CUSTOM>(0)
   const [customTime, setCustomTime] = useState(() => formatTime(new Date()))
 
@@ -66,6 +67,7 @@ export function ActionDialog({ title, canConfirm = true, busy, onConfirm, onCanc
           <button class="secondary" onClick={onCancel}>Cancel</button>
           <button disabled={!canConfirm || busy || (isCustom && !customTime)} onClick={confirm}>Save</button>
         </div>
+        {onDelete && <button class="secondary danger" disabled={busy} onClick={onDelete}>Delete</button>}
       </div>
     </div>
   )

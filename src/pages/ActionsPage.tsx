@@ -6,7 +6,7 @@ import { Choice } from '../components/Choice'
 import { NotesEditor } from '../components/NotesEditor'
 import { findOpenFeed, formatDuration, formatTime, latestFeed, oppositeSide, type Entry, type NappyType, type Side } from '../entries'
 import type { RowStore } from '../rowStore'
-import type { Perform } from '../useEntries'
+import type { Perform } from '../useRows'
 import { useNow } from '../useNow'
 
 const SIDES = ['L', 'R'] as const
@@ -18,7 +18,7 @@ type Props = {
   store: RowStore
   entries: Entry[]
   busy: boolean
-  perform: Perform
+  perform: Perform<Entry>
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')

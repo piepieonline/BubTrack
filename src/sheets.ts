@@ -46,3 +46,29 @@ export function batchUpdate(spreadsheetId: string, data: { range: string; values
     body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data }),
   })
 }
+
+type SheetProperties = { sheetId: number; title: string }
+
+function spreadsheetUpdate<T>(spreadsheetId: string, requests: object[]) {
+  return request<T>(`${spreadsheetId}:batchUpdate`, { method: 'POST', body: JSON.stringify({ requests }) })
+}
+
+// Without a title this is the first sheet; a titled sheet is created if missing.
+export async function getSheetId(spreadsheetId: string, title?: string): Promise<number> {
+  const { sheets } = await request<{ sheets: { properties: SheetProperties }[] }>(
+    `${spreadsheetId}?fields=sheets.properties(sheetId,title)`,
+  )
+  const existing = title === undefined ? sheets[0] : sheets.find((sheet) => sheet.properties.title === title)
+  if (existing) return existing.properties.sheetId
+  const { replies } = await spreadsheetUpdate<{ replies: { addSheet: { properties: SheetProperties } }[] }>(
+    spreadsheetId,
+    [{ addSheet: { properties: { title } } }],
+  )
+  return replies[0].addSheet.properties.sheetId
+}
+
+export function deleteRow(spreadsheetId: string, sheetId: number, rowNumber: number) {
+  return spreadsheetUpdate(spreadsheetId, [
+    { deleteDimension: { range: { sheetId, dimension: 'ROWS', startIndex: rowNumber - 1, endIndex: rowNumber } } },
+  ])
+}

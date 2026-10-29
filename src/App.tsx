@@ -2,13 +2,16 @@ import type { ComponentChildren } from 'preact'
 import { useEffect, useMemo, useState } from 'preact/hooks'
 import { hasValidToken, onSignedOut, signOut, startSignIn, takeSignInError } from './auth'
 import { HeaderMenu } from './components/HeaderMenu'
+import { COLUMNS, parseEntries, type Entry } from './entries'
 import { ActionsPage } from './pages/ActionsPage'
 import { LogPage } from './pages/LogPage'
+import { TimersPage } from './pages/TimersPage'
 import { forgetSavedSheet, loadSavedSheet, pickSpreadsheet, type PickedSheet } from './picker'
 import type { RowStore } from './rowStore'
 import { SessionRowStore } from './sessionRowStore'
 import { SheetRowStore } from './sheetRowStore'
-import { useEntries, type Perform } from './useEntries'
+import { parseTimers, TIMER_COLUMNS, TIMERS_SHEET, type Timer } from './timers'
+import { useRows, type Perform } from './useRows'
 
 const alwaysRefresh = () => true
 const isTestMode = new URLSearchParams(location.search).has('test')
@@ -18,16 +21,26 @@ export function App() {
 }
 
 function TestModeApp() {
-  const store = useMemo(() => new SessionRowStore(), [])
+  const store = useMemo(() => new SessionRowStore('bubtrack.test.rows'), [])
+  const timersStore = useMemo(() => new SessionRowStore('bubtrack.test.timers'), [])
   return (
     <Main
       store={store}
+      timersStore={timersStore}
       canRefresh={alwaysRefresh}
-      header={(perform) => (
+      header={(perform, performTimers) => (
         <div class="test-banner">
           <strong>TEST MODE</strong>
           <HeaderMenu>
-            <button class="menu-item" onClick={() => perform(async () => store.clear())}>Clear data</button>
+            <button
+              class="menu-item"
+              onClick={() => {
+                perform(async () => store.clear())
+                performTimers(async () => timersStore.clear())
+              }}
+            >
+              Clear data
+            </button>
           </HeaderMenu>
         </div>
       )}
@@ -40,7 +53,8 @@ function GoogleApp() {
   const [sheet, setSheet] = useState<PickedSheet | undefined>(loadSavedSheet())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | undefined>(takeSignInError)
-  const store = useMemo(() => sheet && new SheetRowStore(sheet.id), [sheet?.id])
+  const store = useMemo(() => sheet && new SheetRowStore(sheet.id, COLUMNS), [sheet?.id])
+  const timersStore = useMemo(() => sheet && new SheetRowStore(sheet.id, TIMER_COLUMNS, TIMERS_SHEET), [sheet?.id])
 
   useEffect(() => onSignedOut(() => setSignedIn(false)), [])
 
@@ -77,7 +91,7 @@ function GoogleApp() {
     setSignedIn(false)
   })
 
-  if (!signedIn || !store) {
+  if (!signedIn || !store || !timersStore) {
     return (
       <Gate error={error}>
         {!signedIn
@@ -90,6 +104,7 @@ function GoogleApp() {
   return (
     <Main
       store={store}
+      timersStore={timersStore}
       canRefresh={hasValidToken}
       header={() => (
         <div class="sheet-bar">
@@ -114,7 +129,7 @@ function Gate({ error, children }: { error?: string; children: ComponentChildren
   )
 }
 
-type Route = 'actions' | 'log'
+type Route = 'actions' | 'log' | 'timers'
 
 function useHashRoute(): Route {
   const [hash, setHash] = useState(location.hash)
@@ -123,41 +138,62 @@ function useHashRoute(): Route {
     addEventListener('hashchange', onHashChange)
     return () => removeEventListener('hashchange', onHashChange)
   }, [])
-  return hash === '#/log' ? 'log' : 'actions'
+  if (hash === '#/log') return 'log'
+  if (hash === '#/timers') return 'timers'
+  return 'actions'
 }
 
 type MainProps = {
   store: RowStore
+  timersStore: RowStore
   canRefresh: () => boolean
-  header: (perform: Perform) => ComponentChildren
+  header: (perform: Perform<Entry>, performTimers: Perform<Timer>) => ComponentChildren
 }
 
-function Main({ store, canRefresh, header }: MainProps) {
-  const { entries, busy, error, perform, dismissError } = useEntries(store, canRefresh)
+function Main({ store, timersStore, canRefresh, header }: MainProps) {
+  const { items: entries, busy, error, perform, dismissError } = useRows(store, parseEntries, canRefresh)
+  const timers = useRows(timersStore, parseTimers, canRefresh)
   const route = useHashRoute()
 
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === 'visible' && canRefresh()) perform()
+      if (document.visibilityState === 'visible' && canRefresh()) {
+        perform()
+        timers.perform()
+      }
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
-  }, [perform, canRefresh])
+  }, [perform, timers.perform, canRefresh])
 
   const pageProps = { store, entries, busy, perform }
+  const shownError = error ?? timers.error
 
   return (
     <>
       <main>
-        {header(perform)}
-        {error && (
-          <p class="error" onClick={dismissError}>{error}</p>
+        {header(perform, timers.perform)}
+        {shownError && (
+          <p
+            class="error"
+            onClick={() => {
+              dismissError()
+              timers.dismissError()
+            }}
+          >
+            {shownError}
+          </p>
         )}
-        {route === 'log' ? <LogPage {...pageProps} /> : <ActionsPage {...pageProps} />}
+        {route === 'log' && <LogPage {...pageProps} />}
+        {route === 'timers' && (
+          <TimersPage store={timersStore} timers={timers.items} busy={timers.busy} perform={timers.perform} />
+        )}
+        {route === 'actions' && <ActionsPage {...pageProps} />}
       </main>
       <nav class="tabs">
         <a href="#/actions" class={route === 'actions' ? 'active' : ''}>Actions</a>
         <a href="#/log" class={route === 'log' ? 'active' : ''}>Log</a>
+        <a href="#/timers" class={route === 'timers' ? 'active' : ''}>Timers</a>
       </nav>
     </>
   )

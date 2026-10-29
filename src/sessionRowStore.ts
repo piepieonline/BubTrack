@@ -1,17 +1,21 @@
 import { FIRST_DATA_ROW, type Cell, type CellUpdate, type RowStore, type StoredRow } from './rowStore'
 
-const STORAGE_KEY = 'bubtrack.test.rows'
-
 // Mimics the only USER_ENTERED behaviour the app relies on: a leading apostrophe marks plain text.
 const asUserEntered = (value: string) => (value.startsWith("'") ? value.slice(1) : value)
 
 export class SessionRowStore implements RowStore {
+  private readonly storageKey: string
+
+  constructor(storageKey: string) {
+    this.storageKey = storageKey
+  }
+
   private load(): Cell[][] {
-    return JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? '[]')
+    return JSON.parse(sessionStorage.getItem(this.storageKey) ?? '[]')
   }
 
   private save(rows: Cell[][]) {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(rows))
+    sessionStorage.setItem(this.storageKey, JSON.stringify(rows))
   }
 
   async readAll(): Promise<StoredRow[]> {
@@ -30,7 +34,13 @@ export class SessionRowStore implements RowStore {
     this.save(rows)
   }
 
+  async delete(rowNumber: number) {
+    const rows = this.load()
+    rows.splice(rowNumber - FIRST_DATA_ROW, 1)
+    this.save(rows)
+  }
+
   clear() {
-    sessionStorage.removeItem(STORAGE_KEY)
+    sessionStorage.removeItem(this.storageKey)
   }
 }

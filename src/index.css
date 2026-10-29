@@ -421,3 +421,52 @@ input {
 .amount-picker .chips .chip {
   padding-inline: 2px;
 }
+
+.timer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-left: 4px solid transparent;
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.timer.due {
+  border-left-color: var(--error);
+}
+
+.timer-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.timer-info strong {
+  font-size: 1.15rem;
+}
+
+.timer.due .timer-next {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.add-timer {
+  width: 100%;
+}
+
+button.danger {
+  color: var(--error);
+  border-color: var(--error);
+}

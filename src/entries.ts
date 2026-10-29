@@ -48,10 +48,14 @@ export const formatDate = (date: Date) =>
 
 export const formatTime = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`
 
+export const formatDateTime = (date: Date) => `${formatDate(date)} ${formatTime(date)}`
+
 export function formatDuration(ms: number): string {
   const totalMinutes = Math.max(0, Math.round(ms / 60_000))
-  const hours = Math.floor(totalMinutes / 60)
+  const days = Math.floor(totalMinutes / MINUTES_PER_DAY)
+  const hours = Math.floor(totalMinutes / 60) % 24
   const minutes = totalMinutes % 60
+  if (days) return `${days}d ${hours}h`
   return hours ? `${hours}h ${pad(minutes)}m` : `${minutes}m`
 }
 
@@ -72,7 +76,7 @@ function parseMinutesOfDay(cell: Cell | undefined): number | undefined {
   return match ? +match[1] * 60 + +match[2] : undefined
 }
 
-function parseAmount(cell: Cell | undefined): number | undefined {
+export function parseAmount(cell: Cell | undefined): number | undefined {
   if (cell === undefined || cell === '') return undefined
   const amount = Number(cell)
   return Number.isFinite(amount) ? amount : undefined
@@ -80,6 +84,12 @@ function parseAmount(cell: Cell | undefined): number | undefined {
 
 const atMinutes = (day: Date, minutes: number) =>
   new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, minutes)
+
+export function parseDateTime(cell: Cell | undefined): Date | undefined {
+  if (typeof cell === 'number') return atMinutes(parseDate(cell)!, parseMinutesOfDay(cell)!)
+  const match = /^(\d{4}-\d{1,2}-\d{1,2})[ T](\d{1,2}:\d{2})/.exec(cell ?? '')
+  return match ? atMinutes(parseDate(match[1])!, parseMinutesOfDay(match[2])!) : undefined
+}
 
 function parseRow({ rowNumber, cells }: StoredRow): Entry | undefined {
   const id = parseAmount(cells[Column.Id])

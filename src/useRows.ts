@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks'
-import { parseEntries, type Entry } from './entries'
-import type { RowStore } from './rowStore'
+import type { RowStore, StoredRow } from './rowStore'
 
-export type Perform = (action?: (fresh: Entry[]) => Promise<void>) => Promise<boolean>
+export type Perform<T> = (action?: (fresh: T[]) => Promise<void>) => Promise<boolean>
 
 const BACKGROUND_REFRESH_MS = 60_000
 
-export function useEntries(store: RowStore, canRefresh: () => boolean) {
-  const [entries, setEntries] = useState<Entry[]>([])
+export function useRows<T>(store: RowStore, parse: (rows: StoredRow[]) => T[], canRefresh: () => boolean) {
+  const [items, setItems] = useState<T[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>()
   const latestLoad = useRef(0)
@@ -16,13 +15,13 @@ export function useEntries(store: RowStore, canRefresh: () => boolean) {
   // Only the most recent read updates state, so a slow background read can't overwrite a newer one.
   const load = useCallback(async () => {
     const loadNumber = ++latestLoad.current
-    const fresh = parseEntries(await store.readAll())
-    if (loadNumber === latestLoad.current) setEntries(fresh)
+    const fresh = parse(await store.readAll())
+    if (loadNumber === latestLoad.current) setItems(fresh)
     return fresh
-  }, [store])
+  }, [store, parse])
 
   // Always re-reads first so actions see the other phone's latest writes.
-  const perform: Perform = useCallback(async (action) => {
+  const perform: Perform<T> = useCallback(async (action) => {
     performing.current = true
     setBusy(true)
     setError(undefined)
@@ -55,5 +54,5 @@ export function useEntries(store: RowStore, canRefresh: () => boolean) {
     return () => clearInterval(id)
   }, [load, canRefresh])
 
-  return { entries, busy, error, perform, dismissError: () => setError(undefined) }
+  return { items, busy, error, perform, dismissError: () => setError(undefined) }
 }
