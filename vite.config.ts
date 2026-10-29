@@ -6,6 +6,9 @@ const TUNNEL_HOST = 'dev.piepieonline.com'
 
 export default defineConfig({
   base: '/BubTrack/',
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(process.env.GITHUB_SHA?.slice(0, 7) ?? 'Dev'),
+  },
   server: { allowedHosts: [TUNNEL_HOST] },
   preview: { allowedHosts: [TUNNEL_HOST] },
   plugins: [

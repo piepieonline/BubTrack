@@ -1,6 +1,7 @@
 import type { ComponentChildren } from 'preact'
 import { useEffect, useMemo, useState } from 'preact/hooks'
 import { hasValidToken, onSignedOut, signOut, startSignIn, takeSignInError } from './auth'
+import { HeaderMenu } from './components/HeaderMenu'
 import { ActionsPage } from './pages/ActionsPage'
 import { LogPage } from './pages/LogPage'
 import { forgetSavedSheet, loadSavedSheet, pickSpreadsheet, type PickedSheet } from './picker'
@@ -25,7 +26,9 @@ function TestModeApp() {
       header={(perform) => (
         <div class="test-banner">
           <strong>TEST MODE</strong>
-          <button class="link" onClick={() => perform(async () => store.clear())}>Clear data</button>
+          <HeaderMenu>
+            <button class="menu-item" onClick={() => perform(async () => store.clear())}>Clear data</button>
+          </HeaderMenu>
         </div>
       )}
     />
@@ -91,8 +94,10 @@ function GoogleApp() {
       header={() => (
         <div class="sheet-bar">
           <span class="muted">{sheet!.name}</span>
-          <button class="link" onClick={chooseSheet}>change</button>
-          <button class="link" onClick={handleSignOut}>Sign out</button>
+          <HeaderMenu>
+            <button class="menu-item" onClick={chooseSheet}>Change spreadsheet</button>
+            <button class="menu-item" onClick={handleSignOut}>Sign out</button>
+          </HeaderMenu>
         </div>
       )}
     />
