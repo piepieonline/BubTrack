@@ -517,7 +517,7 @@ button.danger {
   text-decoration: line-through;
 }
 
-button.danger-link {
+button.icon-link {
   color: var(--muted);
   text-decoration: none;
   padding: 8px 10px;

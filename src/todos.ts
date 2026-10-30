@@ -41,6 +41,11 @@ export async function addTodo(store: RowStore, task: string) {
   await store.append([[textCell(task.trim()), '']])
 }
 
+export async function renameTodo(store: RowStore, fresh: Todo[], todo: Todo, task: string) {
+  const { rowNumber } = requireTodo(fresh, todo)
+  await store.update([{ rowNumber, column: TodoColumn.Task, value: textCell(task.trim()) }])
+}
+
 export async function setTodoDone(store: RowStore, fresh: Todo[], todo: Todo, done: boolean) {
   const { rowNumber } = requireTodo(fresh, todo)
   await store.update([{ rowNumber, column: TodoColumn.DoneAt, value: done ? formatDateTime(new Date()) : '' }])
