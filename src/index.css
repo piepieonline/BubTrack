@@ -418,6 +418,19 @@ input {
   color: var(--accent);
 }
 
+.badge {
+  min-width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #c62828;
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 20px;
+  text-align: center;
+}
+
 .amount-picker .chips .chip {
   padding-inline: 2px;
 }
@@ -455,6 +468,16 @@ input {
 
 .timer-info strong {
   font-size: 1.15rem;
+}
+
+.timer.paused .timer-info {
+  opacity: 0.6;
+}
+
+.timer-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .timer.due .timer-next {

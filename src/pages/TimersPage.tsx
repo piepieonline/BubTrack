@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks'
 import { ActionDialog } from '../components/ActionDialog'
 import { formatDate, formatDuration, formatTime } from '../entries'
 import type { RowStore } from '../rowStore'
-import { addTimer, deleteTimer, updateTimer, type Timer } from '../timers'
+import { addTimer, deleteTimer, isOverdue, pauseTimer, resumeTimer, updateTimer, type Timer } from '../timers'
 import type { Perform } from '../useRows'
 import { useNow } from '../useNow'
 
@@ -42,6 +42,9 @@ export function TimersPage({ store, timers, busy, perform }: Props) {
     if (await perform((fresh) => deleteTimer(store, fresh, updating!.name))) setUpdating(undefined)
   }
 
+  const togglePaused = (timer: Timer) =>
+    perform((fresh) => (timer.pausedAt ? resumeTimer : pauseTimer)(store, fresh, timer.name))
+
   async function confirmAdd(at: Date) {
     if (await perform((fresh) => addTimer(store, fresh, name, parsedEveryHours, at))) setAdding(false)
   }
@@ -52,21 +55,29 @@ export function TimersPage({ store, timers, busy, perform }: Props) {
       <ul class="timer-list">
         {timers.map((timer) => {
           const msUntilNext = timer.nextAt.getTime() - now
-          const due = msUntilNext <= 0
+          const due = isOverdue(timer, now)
+          const className = timer.pausedAt ? 'timer paused' : due ? 'timer due' : 'timer'
           return (
-            <li key={timer.rowNumber} class={due ? 'timer due' : 'timer'}>
+            <li key={timer.rowNumber} class={className}>
               <div class="timer-info">
                 <strong>{timer.name}</strong>
                 <span class="muted">
                   Last {formatWhen(timer.lastAt, now)} · {formatDuration(now - timer.lastAt.getTime())} ago
                 </span>
                 <span class="timer-next">
-                  {due
-                    ? `Due since ${formatWhen(timer.nextAt, now)} · ${formatDuration(-msUntilNext)} ago`
-                    : `Next ${formatWhen(timer.nextAt, now)} · in ${formatDuration(msUntilNext)}`}
+                  {timer.pausedAt
+                    ? `Paused ${formatWhen(timer.pausedAt, now)} · ${formatDuration(timer.nextAt.getTime() - timer.pausedAt.getTime())} left`
+                    : due
+                      ? `Due since ${formatWhen(timer.nextAt, now)} · ${formatDuration(-msUntilNext)} ago`
+                      : `Next ${formatWhen(timer.nextAt, now)} · in ${formatDuration(msUntilNext)}`}
                 </span>
               </div>
-              <button disabled={busy} onClick={() => setUpdating(timer)}>Update</button>
+              <div class="timer-buttons">
+                <button disabled={busy} onClick={() => setUpdating(timer)}>Update</button>
+                <button class="secondary small" disabled={busy} onClick={() => togglePaused(timer)}>
+                  {timer.pausedAt ? 'Resume' : 'Pause'}
+                </button>
+              </div>
             </li>
           )
         })}

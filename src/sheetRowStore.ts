@@ -35,7 +35,7 @@ export class SheetRowStore implements RowStore {
   async readAll(): Promise<StoredRow[]> {
     if (this.sheetTitle) await this.resolveSheetId()
     const [header, ...rows] = await readRange(this.spreadsheetId, this.range(`A1:${this.lastColumn}`))
-    if (!header?.length) {
+    if ((header?.length ?? 0) < this.columns.length) {
       await batchUpdate(this.spreadsheetId, [{ range: this.range(`A1:${this.lastColumn}1`), values: [[...this.columns]] }])
     }
     return rows.map((cells, index) => ({ rowNumber: index + FIRST_DATA_ROW, cells }))

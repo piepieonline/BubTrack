@@ -3,13 +3,14 @@ import type { RowStore, StoredRow } from './rowStore'
 
 export const TIMERS_SHEET = 'Timers'
 
-export const TIMER_COLUMNS = ['Name', 'Every (h)', 'Last at', 'Next at'] as const
+export const TIMER_COLUMNS = ['Name', 'Every (h)', 'Last at', 'Next at', 'Paused at'] as const
 
 const TimerColumn = {
   Name: 0,
   EveryHours: 1,
   LastAt: 2,
   NextAt: 3,
+  PausedAt: 4,
 } as const
 
 export type Timer = {
@@ -18,6 +19,7 @@ export type Timer = {
   everyHours: number
   lastAt: Date
   nextAt: Date
+  pausedAt?: Date
 }
 
 const HOUR_MS = 60 * 60 * 1000
@@ -31,14 +33,18 @@ function parseTimer({ rowNumber, cells }: StoredRow): Timer | undefined {
   const lastAt = parseDateTime(cells[TimerColumn.LastAt])
   if (!name || !everyHours || everyHours <= 0 || !lastAt) return undefined
   const nextAt = parseDateTime(cells[TimerColumn.NextAt]) ?? nextAfter(lastAt, everyHours)
-  return { rowNumber, name, everyHours, lastAt, nextAt }
+  const pausedAt = parseDateTime(cells[TimerColumn.PausedAt])
+  return { rowNumber, name, everyHours, lastAt, nextAt, pausedAt }
 }
 
+export const isOverdue = (timer: Timer, now: number) => !timer.pausedAt && timer.nextAt.getTime() <= now
+
+// Running timers by next due, then paused ones.
 export function parseTimers(rows: StoredRow[]): Timer[] {
   return rows
     .map(parseTimer)
     .filter((timer): timer is Timer => !!timer)
-    .sort((a, b) => a.nextAt.getTime() - b.nextAt.getTime())
+    .sort((a, b) => Number(!!a.pausedAt) - Number(!!b.pausedAt) || a.nextAt.getTime() - b.nextAt.getTime())
 }
 
 const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase()
@@ -65,6 +71,24 @@ export async function updateTimer(store: RowStore, fresh: Timer[], name: string,
   await store.update([
     { rowNumber, column: TimerColumn.LastAt, value: formatDateTime(at) },
     { rowNumber, column: TimerColumn.NextAt, value: formatDateTime(nextAfter(at, everyHours)) },
+    { rowNumber, column: TimerColumn.PausedAt, value: '' },
+  ])
+}
+
+export async function pauseTimer(store: RowStore, fresh: Timer[], name: string) {
+  const { rowNumber, pausedAt } = requireTimer(fresh, name)
+  if (pausedAt) return
+  await store.update([{ rowNumber, column: TimerColumn.PausedAt, value: formatDateTime(new Date()) }])
+}
+
+// Pushes Next at back by the time spent paused, so the timer picks up where it left off.
+export async function resumeTimer(store: RowStore, fresh: Timer[], name: string) {
+  const { rowNumber, nextAt, pausedAt } = requireTimer(fresh, name)
+  if (!pausedAt) return
+  const resumedNextAt = new Date(nextAt.getTime() + Date.now() - pausedAt.getTime())
+  await store.update([
+    { rowNumber, column: TimerColumn.NextAt, value: formatDateTime(resumedNextAt) },
+    { rowNumber, column: TimerColumn.PausedAt, value: '' },
   ])
 }
 

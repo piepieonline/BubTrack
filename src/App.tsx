@@ -11,8 +11,9 @@ import { forgetSavedSheet, loadSavedSheet, pickSpreadsheet, type PickedSheet } f
 import type { RowStore } from './rowStore'
 import { SessionRowStore } from './sessionRowStore'
 import { SheetRowStore } from './sheetRowStore'
-import { parseTimers, TIMER_COLUMNS, TIMERS_SHEET, type Timer } from './timers'
+import { isOverdue, parseTimers, TIMER_COLUMNS, TIMERS_SHEET, type Timer } from './timers'
 import { parseTodos, TODO_COLUMNS, TODOS_SHEET, type Todo } from './todos'
+import { useNow } from './useNow'
 import { useRows, type Perform } from './useRows'
 
 const alwaysRefresh = () => true
@@ -164,6 +165,8 @@ function Main({ store, timersStore, todosStore, canRefresh, header }: MainProps)
   const timers = useRows(timersStore, parseTimers, canRefresh)
   const todos = useRows(todosStore, parseTodos, canRefresh)
   const route = useHashRoute()
+  const now = useNow(15_000)
+  const overdueTimerCount = timers.items.filter((timer) => isOverdue(timer, now)).length
 
   useEffect(() => {
     const onVisible = () => {
@@ -208,7 +211,10 @@ function Main({ store, timersStore, todosStore, canRefresh, header }: MainProps)
       <nav class="tabs">
         <a href="#/actions" class={route === 'actions' ? 'active' : ''}>Actions</a>
         <a href="#/log" class={route === 'log' ? 'active' : ''}>Log</a>
-        <a href="#/timers" class={route === 'timers' ? 'active' : ''}>Timers</a>
+        <a href="#/timers" class={route === 'timers' ? 'active' : ''}>
+          Timers
+          {overdueTimerCount > 0 && <span class="badge" aria-label={`${overdueTimerCount} overdue`}>{overdueTimerCount}</span>}
+        </a>
         <a href="#/todos" class={route === 'todos' ? 'active' : ''}>TODO</a>
       </nav>
     </>
