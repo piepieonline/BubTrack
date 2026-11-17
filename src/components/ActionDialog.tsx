@@ -2,7 +2,7 @@ import type { ComponentChildren } from 'preact'
 import { useState } from 'preact/hooks'
 import { formatTime } from '../entries'
 
-const MINUTES_AGO_OPTIONS = [0, 5, 10, 15, 20]
+const MINUTES_AGO_OPTIONS = [0, 2, 5, 10, 15]
 const CUSTOM = 'custom'
 
 type Props = {
